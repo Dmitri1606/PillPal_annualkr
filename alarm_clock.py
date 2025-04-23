@@ -1,15 +1,10 @@
 import flet as ft
-import time
-from datetime import datetime
-import winsound
 import pandas as pd
-import threading
-
 
 try:
     df_excel = pd.read_excel('Новая таблица (2).xlsx')
 except FileNotFoundError:
-    df_excel = pd.DataFrame(columns=["Время", "Название", "Количество", "Мера"])
+    df_excel = pd.DataFrame(columns=["Время", "Название", "Количество", "Мера", "Период"])
 
 
 def main(page: ft.Page):
@@ -30,34 +25,57 @@ def main(page: ft.Page):
         keyboard_type=ft.KeyboardType.NUMBER
     )
     name_pill = ft.TextField(
-        label="Название таблетки", width=150,
+        label="Глютамин", width=150,
         text_align=ft.TextAlign.CENTER
     )
     volume = ft.TextField(
-        label="Количество", width=150,
+        label="4", width=150,
         text_align=ft.TextAlign.CENTER
     )
     volumet = ft.TextField(
-        label="Мера (мг/мл и т.д.)", width=150,
+        label="мл", width=150,
         text_align=ft.TextAlign.CENTER
     )
 
-    alarm_time = None
-    is_alarm_set = False
-    time_display = ft.Text(size=40, weight=ft.FontWeight.BOLD)
     status = ft.Text(size=20)
+    current_period = "Месяц"  # Переменная для хранения текущего периода
 
-    def on_click(e):  # Функция, вызываемая при нажатии
-        page.add(ft.Text(df_excel))  # Добавляем текст на экран
+    def show_list(e):
+        # Обновляем отображение DataFrame
+        page.controls.append(ft.Text(str(df_excel)))
+        page.update()
 
-    button = ft.ElevatedButton("Нажми меня", on_click=on_click)
+    def on_click_month(e):
+        nonlocal current_period
+        current_period = "Месяц"
+        status.value = f"Выбран период: {current_period}"
+        page.update()
+
+    month = ft.ElevatedButton("Месяц", on_click=on_click_month)
+
+    def on_click_day(e):
+        nonlocal current_period
+        current_period = "День"
+        status.value = f"Выбран период: {current_period}"
+        page.update()
+
+    day = ft.ElevatedButton("День", on_click=on_click_day)
+
+    def on_click_week(e):
+        nonlocal current_period
+        current_period = "Неделя"
+        status.value = f"Выбран период: {current_period}"
+        page.update()
+
+    week = ft.ElevatedButton("Неделя", on_click=on_click_week)
 
     def save_to_excel():
         new_data = {
             "Время": f"{hour_tf.value}:{minute_tf.value}",
             "Название": name_pill.value,
             "Количество": volume.value,
-            "Мера": volumet.value
+            "Мера": volumet.value,
+            "Период": current_period
         }
         global df_excel
         df_excel = pd.concat([df_excel, pd.DataFrame([new_data])], ignore_index=True)
@@ -65,19 +83,7 @@ def main(page: ft.Page):
         print("Данные сохранены в Excel:")
         print(df_excel)
 
-    def update_clock():
-        while True:
-            now = datetime.now()
-            current_time = now.strftime("%H:%M:%S")
-            time_display.value = current_time
-            page.update()
-            time.sleep(1)
-
-            if is_alarm_set and now.hour == alarm_time[0] and now.minute == alarm_time[1]:
-                trigger_alarm()
-
     def set_alarm(e):
-        nonlocal alarm_time, is_alarm_set
         try:
             h = int(hour_tf.value)
             m = int(minute_tf.value)
@@ -85,53 +91,44 @@ def main(page: ft.Page):
             if not (0 <= h < 24 and 0 <= m < 60):
                 raise ValueError("Некорректное время!")
 
-            alarm_time = (h, m)
-            is_alarm_set = True
-            status.value = f"⏰ Напоминание установлено на {h:02d}:{m:02d}"
-            status.color = ft.colors.GREEN
             save_to_excel()  # Сохраняем данные в Excel
+            status.value = f"Таблетка {name_pill.value} добавлена!"
+            status.color = ft.colors.GREEN
             page.update()
-        except ValueError:
-            status.value = "❌ Ошибка! Введите корректное время."
+        except ValueError as ve:
+            status.value = f"❌ Ошибка! {str(ve)}"
             status.color = ft.colors.RED
             page.update()
 
-    def trigger_alarm():
-        nonlocal is_alarm_set
-        status.value = (f"💊 Примите: {name_pill.value} - "
-                        f"{volume.value} {volumet.value}")
-        status.color = ft.colors.RED
-        page.update()
-        winsound.Beep(2000, 3000)
-        is_alarm_set = False
+    # Создаем кнопку для добавления напоминания
+    add_button = ft.ElevatedButton("Добавить напоминание", on_click=set_alarm)
+
+    # Создаем кнопку для показа списка
+    show_button = ft.ElevatedButton("Показать список", on_click=show_list)
 
     # Интерфейс
     page.add(
         ft.Column(
             [
-                ft.Text("Умная таблетница", size=30, weight=ft.FontWeight.BOLD),
+                ft.Text("Выберите время", size=20, weight=ft.FontWeight.BOLD),
                 ft.Row([hour_tf, minute_tf], alignment=ft.MainAxisAlignment.CENTER),
+                ft.Text("Введите название", size=20, weight=ft.FontWeight.BOLD),
                 name_pill,
+                ft.Text("Введите количество", size=20, weight=ft.FontWeight.BOLD),
                 volume,
+                ft.Text("Введите меру", size=20, weight=ft.FontWeight.BOLD),
                 volumet,
-                ft.ElevatedButton(
-                    "Установить напоминание",
-                    on_click=set_alarm,
-                    height=50,
-                    width=200
-                ),
+                ft.Text("Выберите период", size=20, weight=ft.FontWeight.BOLD),
+                ft.Row([day, week, month], alignment=ft.MainAxisAlignment.CENTER),
                 ft.Divider(height=20),
-                time_display,
+                add_button, 
+                show_button, 
                 status,
-                button
             ],
             alignment=ft.MainAxisAlignment.CENTER,
             horizontal_alignment=ft.CrossAxisAlignment.CENTER
         )
     )
-
-    # Запуск обновления времени
-    threading.Thread(target=update_clock, daemon=True).start()
 
 
 ft.app(target=main)

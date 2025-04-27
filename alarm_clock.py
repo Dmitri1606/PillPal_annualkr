@@ -4,7 +4,7 @@ import calendar
 from datetime import datetime
 
 try:
-    df_excel = pd.read_excel('Новая таблица (2).xlsx')
+    df_excel = pd.read_excel('Новая таблица (3).xlsx')
 except FileNotFoundError:
     df_excel = pd.DataFrame(columns=["Время", "Название", "Количество", "Мера", "Период"])
 
@@ -108,6 +108,7 @@ def main(page: ft.Page):
         nonlocal current_period
         current_period = "Месяц"
         status.value = f"Выбран период: {current_period}"
+        status.color = ft.colors.BLUE
         page.update()
 
     month = ft.ElevatedButton("Месяц", on_click=on_click_month)
@@ -116,6 +117,7 @@ def main(page: ft.Page):
         nonlocal current_period
         current_period = "День"
         status.value = f"Выбран период: {current_period}"
+        status.color = ft.colors.BLUE
         page.update()
 
     day = ft.ElevatedButton("День", on_click=on_click_day)
@@ -124,6 +126,7 @@ def main(page: ft.Page):
         nonlocal current_period
         current_period = "Неделя"
         status.value = f"Выбран период: {current_period}"
+        status.color = ft.colors.BLUE
         page.update()
 
     week = ft.ElevatedButton("Неделя", on_click=on_click_week)
@@ -159,19 +162,24 @@ def main(page: ft.Page):
 
         month_names = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
                        "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-
+        a = current_year
         header = ft.Text(
             value=f"{month_names[current_month - 1]} {current_year}",
             size=24,
             weight=ft.FontWeight.BOLD,
             text_align=ft.TextAlign.CENTER,
         )
+        def calendar_month(e):
+            nonlocal current_year
+            current_year +=1
+
 
         def select_date(e):
-            """Устанавливает выбранную дату как текущий период"""
+    
             nonlocal current_period
             current_period = f"{selected_day:02d}.{current_month:02d}.{current_year}"
             status.value = f"Выбрана дата: {current_period}"
+            status.color = ft.colors.BLUE
             show_main_page()
 
         def prev_month(e):
@@ -197,6 +205,7 @@ def main(page: ft.Page):
                 ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=prev_month),
                 ft.IconButton(icon=ft.icons.ARROW_FORWARD, on_click=next_month),
                 ft.ElevatedButton("Выбрать дату", on_click=select_date),
+                ft.ElevatedButton("Год", on_click=calendar_month)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         )
@@ -290,7 +299,7 @@ def main(page: ft.Page):
                     ft.Row([day, week, month], alignment=ft.MainAxisAlignment.CENTER),
                     ft.ElevatedButton("Выбрать дату", on_click=show_calendar),
                     ft.Divider(height=20),
-                    ft.ElevatedButton("Добавить напоминание", on_click=set_alarm),
+                    ft.ElevatedButton("Добавить таблетку", on_click=set_alarm),
                     ft.ElevatedButton("Показать список", on_click=show_list),
                     status,
                 ],
@@ -300,7 +309,6 @@ def main(page: ft.Page):
         )
 
     def set_alarm(e):
-        """Добавляет новое напоминание"""
         try:
             h = int(hour_tf.value)
             m = int(minute_tf.value)

@@ -4,7 +4,7 @@ import calendar
 from datetime import datetime
 
 try:
-    df_excel = pd.read_excel('Новая таблица (3).xlsx')
+    df_excel = pd.read_excel('Новая таблица.xlsx')
 except FileNotFoundError:
     df_excel = pd.DataFrame(columns=["Время", "Название", "Количество", "Мера", "Период"])
 
@@ -54,11 +54,8 @@ def main(page: ft.Page):
         volumet.value = ""
         page.update()
 
-
     def show_list(e):
-
         """Показывает список напоминаний в виде аккуратной таблицы"""
-        # Создаем DataTable с фиксированными столбцами
         data_table = ft.DataTable(
             columns=[
                 ft.DataColumn(ft.Text("Название", weight=ft.FontWeight.BOLD)),
@@ -82,8 +79,6 @@ def main(page: ft.Page):
             heading_row_color=ft.colors.BLUE_GREY_100,
         )
 
-
-        # Очищаем страницу и добавляем таблицу
         page.clean()
         page.add(
             ft.Column(
@@ -95,14 +90,12 @@ def main(page: ft.Page):
                         border=ft.border.all(1, ft.colors.GREY_300),
                         border_radius=10,
                     ),
-                    ft.ElevatedButton("Назад",on_click=lambda _: show_main_page(),
-),
+                    ft.ElevatedButton("Назад", on_click=lambda _: show_main_page()),
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             )
         )
-
 
     def on_click_month(e):
         nonlocal current_period
@@ -133,10 +126,10 @@ def main(page: ft.Page):
 
     def save_to_excel():
         """Сохраняет данные в Excel файл"""
-        # Форматируем период в зависимости от выбора
         if current_period in ["День", "Неделя", "Месяц"]:
             period_value = current_period
         else:
+            # Используем выбранную дату вместо текущей
             period_value = f"{selected_day:02d}.{selected_month:02d}.{selected_year}"
 
         new_data = {
@@ -149,35 +142,32 @@ def main(page: ft.Page):
         global df_excel
         df_excel = pd.concat([df_excel, pd.DataFrame([new_data])], ignore_index=True)
         df_excel.to_excel('Новая таблица.xlsx', index=False)
-        clear_fields()  # Очищаем поля после сохранения
+        clear_fields()
 
     def show_calendar(e):
         """Показывает календарь для выбора даты"""
         page.clean()
 
-        now = datetime.now()
-        current_year = now.year
-        current_month = now.month
-        selected_day = now.day
+        nonlocal selected_day, selected_month, selected_year
+        current_year = selected_year
+        current_month = selected_month
+        selected_day = selected_day  # Используем сохраненное значение, а не текущий день
 
         month_names = ["Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-                       "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
-        a = current_year
+                     "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь"]
+
         header = ft.Text(
             value=f"{month_names[current_month - 1]} {current_year}",
             size=24,
             weight=ft.FontWeight.BOLD,
             text_align=ft.TextAlign.CENTER,
         )
-        def calendar_month(e):
-            nonlocal current_year
-            current_year +=1
-
 
         def select_date(e):
-    
-            nonlocal current_period
-            current_period = f"{selected_day:02d}.{current_month:02d}.{current_year}"
+            nonlocal current_period, selected_day, selected_month, selected_year
+            selected_month = current_month
+            selected_year = current_year
+            current_period = f"{selected_day:02d}.{selected_month:02d}.{selected_year}"
             status.value = f"Выбрана дата: {current_period}"
             status.color = ft.colors.BLUE
             show_main_page()
@@ -205,7 +195,6 @@ def main(page: ft.Page):
                 ft.IconButton(icon=ft.icons.ARROW_BACK, on_click=prev_month),
                 ft.IconButton(icon=ft.icons.ARROW_FORWARD, on_click=next_month),
                 ft.ElevatedButton("Выбрать дату", on_click=select_date),
-                ft.ElevatedButton("Год", on_click=calendar_month)
             ],
             alignment=ft.MainAxisAlignment.CENTER,
         )
@@ -225,8 +214,8 @@ def main(page: ft.Page):
             weekday_names = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
             week_header = ft.Row(
                 controls=[ft.Text(day, size=14, weight=ft.FontWeight.BOLD,
-                                  width=40, text_align=ft.TextAlign.CENTER)
-                          for day in weekday_names],
+                                width=40, text_align=ft.TextAlign.CENTER)
+                        for day in weekday_names],
                 alignment=ft.MainAxisAlignment.SPACE_EVENLY,
             )
             calendar_grid.controls.append(week_header)
@@ -255,7 +244,7 @@ def main(page: ft.Page):
             if day == 0:
                 return
             selected_day = day
-            selected_date_display.value = f"Выбрано: {day:02d}.{current_month:02d}.{current_year}"
+            selected_date_display.value = f"Выбрано: {selected_day:02d}.{current_month:02d}.{current_year}"
             update_calendar()
 
         back_button = ft.ElevatedButton(

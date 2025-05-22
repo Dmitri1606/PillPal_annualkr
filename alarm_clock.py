@@ -114,6 +114,13 @@ def main(page: ft.Page):
         volumet.value = ""
         page.update()
 
+    def delete_pill(index):
+        global df_excel
+        df_excel = df_excel.drop(index).reset_index(drop=True)
+        status.value = "Запись удалена!"
+        status.color = ft.colors.RED
+        show_list(None)
+
     def show_list(e):
         data_table = ft.DataTable(
             columns=[
@@ -122,6 +129,7 @@ def main(page: ft.Page):
                 ft.DataColumn(ft.Text("Количество", weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("Мера", weight=ft.FontWeight.BOLD)),
                 ft.DataColumn(ft.Text("Период", weight=ft.FontWeight.BOLD)),
+                ft.DataColumn(ft.Text("Действие", weight=ft.FontWeight.BOLD)),
             ],
             rows=[
                 ft.DataRow(
@@ -131,8 +139,16 @@ def main(page: ft.Page):
                         ft.DataCell(ft.Text(str(row["Количество"]))),
                         ft.DataCell(ft.Text(str(row["Мера"]))),
                         ft.DataCell(ft.Text(str(row["Период"]))),
+                        ft.DataCell(
+                            ft.ElevatedButton(
+                                "Удалить",
+                                on_click=lambda e, idx=index: delete_pill(idx),
+                                bgcolor=ft.colors.RED_400,
+                                color=ft.colors.WHITE
+                            )
+                        ),
                     ]
-                ) for _, row in df_excel.iterrows()
+                ) for index, row in df_excel.iterrows()
             ],
             column_spacing=20,
             heading_row_color=ft.colors.BLUE_GREY_100,
@@ -256,8 +272,6 @@ def main(page: ft.Page):
             selected_day = day
             selected_date_display.value = f"Выбрано: {selected_day:02d}.{current_month:02d}.{current_year}"
             update_calendar()
-
-
 
         update_calendar()
 

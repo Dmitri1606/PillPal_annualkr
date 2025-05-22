@@ -257,12 +257,7 @@ def main(page: ft.Page):
             selected_date_display.value = f"Выбрано: {selected_day:02d}.{current_month:02d}.{current_year}"
             update_calendar()
 
-        back_button = ft.ElevatedButton(
-            "Назад",
-            on_click=show_main_page,
-            color=ft.colors.WHITE,
-            bgcolor=ft.colors.BLUE,
-        )
+
 
         update_calendar()
 
@@ -276,7 +271,8 @@ def main(page: ft.Page):
                         content=calendar_grid,
                         alignment=ft.alignment.center
                     ),
-                    back_button
+                    ft.ElevatedButton("Назад", on_click=lambda _: show_main_page()),
+
                 ],
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 alignment=ft.MainAxisAlignment.CENTER
